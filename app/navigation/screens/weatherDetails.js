@@ -15,7 +15,10 @@ export default function WeatherDetails(props) {
     <Container>
       <StatusBar style='auto' />
       <ImageBackground source={bgImg} style={{ width: '100%', height: '100%' }}>
-        <CurrentForecast currentWeather={weather} timezone={weather.timezone} />
+        <CurrentForecast
+          currentWeather={props.route.params}
+          timezone={weather.timezone}
+        />
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ flex: 1 }}>
           <FutureForecastContainer>
             {weather.daily ? (

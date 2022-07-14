@@ -1,5 +1,5 @@
-import React from "react";
-import styled from "styled-components/native";
+import React from 'react';
+import styled from 'styled-components/native';
 
 const CurrentForecast = ({ currentWeather }) => {
   return (
@@ -7,22 +7,21 @@ const CurrentForecast = ({ currentWeather }) => {
       <Timezone>{currentWeather.timezone}</Timezone>
       <MainInfoContainer>
         <CurrentTempView>
-          {currentWeather.current && (
+          {currentWeather && (
             <WeatherIcon
               source={{
-                uri: `http://openweathermap.org/img/wn/${currentWeather.current.weather[0].icon}@2x.png`,
+                uri: `http://openweathermap.org/img/wn/${currentWeather.icon}@2x.png`,
               }}
-              resizeMode={"contain"}
+              resizeMode={'contain'}
             />
           )}
           <CurrentDegrees>
-            {Math.round(currentWeather.current && currentWeather.current.temp)}
+            {Math.round(currentWeather && currentWeather.temp)}
             °C
           </CurrentDegrees>
         </CurrentTempView>
         <Description>
-          {currentWeather.current &&
-            currentWeather.current.weather[0].description}
+          {currentWeather && currentWeather.description}
         </Description>
       </MainInfoContainer>
       <SecondaryInfoContainer>
@@ -30,8 +29,7 @@ const CurrentForecast = ({ currentWeather }) => {
           <DetailsBox>
             <Label>Feels</Label>
             <Details>
-              {currentWeather.current &&
-                Math.round(currentWeather.current.feels_like)}
+              {currentWeather && Math.round(currentWeather.feels_like)}
               °C
             </Details>
           </DetailsBox>
@@ -55,20 +53,16 @@ const CurrentForecast = ({ currentWeather }) => {
         <Row>
           <DetailsBox>
             <Label>Wind</Label>
-            <Details>
-              {currentWeather.current && currentWeather.current.wind_speed} m/s
-            </Details>
+            <Details>{currentWeather && currentWeather.wind_speed} m/s</Details>
           </DetailsBox>
           <DetailsBox>
             <Label>Humidity</Label>
-            <Details>
-              {currentWeather.current && currentWeather.current.humidity}%
-            </Details>
+            <Details>{currentWeather && currentWeather.humidity}%</Details>
           </DetailsBox>
           <DetailsBox>
             <Label>Rain</Label>
             <Details>
-              {currentWeather.daily > 0 ? currentWeather.daily[0].rain : "0"} MM
+              {currentWeather.daily > 0 ? currentWeather.daily[0].rain : '0'} MM
             </Details>
           </DetailsBox>
         </Row>

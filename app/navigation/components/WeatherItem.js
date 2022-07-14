@@ -9,17 +9,18 @@ const WeatherItem = ({ weather, onPress }) => {
         <IconTempView>
           <WeatherIcon
             source={{
-              uri: `http://openweathermap.org/img/wn/${weather.current.weather[0].icon}@2x.png`,
+              uri: `http://openweathermap.org/img/wn/${weather.icon}@2x.png`,
             }}
             resizeMode={'contain'} // cover or contain its upto you view look
           />
-          <Text>{weather.current.weather[0].description}</Text>
+          <DegreeView>
+            <Text>{weather.timezone}</Text>
+            <Text>{weather.description}</Text>
+          </DegreeView>
         </IconTempView>
         <DegreeView>
-          <Degree>{Math.round(weather.current.temp)}°C</Degree>
-          <FeelsLike>
-            Feels {Math.round(weather.current.feels_like)}°C
-          </FeelsLike>
+          <Degree>{Math.round(weather.temp)}°C</Degree>
+          <FeelsLike>Feels {Math.round(weather.feels_like)}°C</FeelsLike>
         </DegreeView>
       </DayContainer>
     </TouchableOpacity>

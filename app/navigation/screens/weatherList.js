@@ -1,28 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, FlatList } from 'react-native';
-import ExpoConstants from 'expo-constants';
+import { Platform, StyleSheet, ImageBackground, FlatList } from 'react-native';
 import * as Location from 'expo-location';
-
-import { colors } from '../../utils/colors';
-// import APIError from '../components/errorModal';
-// import NoConnectionServerError from '../components/NoConnectionServerError';
-import Styles from '../../utils/styles';
+import styled from 'styled-components/native';
+import bgImg from '../../../assets/4.png';
 import { getWeatherList } from '../../api/WeatherAPIs';
 import WeatherItem from '../components/WeatherItem';
+import * as SQLite from 'expo-sqlite';
 
 export default function WeatherList({ navigation }) {
-  const controller = new AbortController();
-  const signal = controller.signal;
+  const db = openDatabase();
+  function openDatabase() {
+    if (Platform.OS === 'web') {
+      return {
+        transaction: () => {
+          return {
+            executeSql: () => {},
+          };
+        },
+      };
+    }
 
-  // const [modalVisible, setModalVisible] = useState(false);
-  // const [networkErrorStatus, setNetworkErrorStatus] = useState(false);
-
+    const db = SQLite.openDatabase('weather-db.db');
+    return db;
+  }
   const [lat, setLat] = useState(43.6532);
   const [long, setLong] = useState(-79.3832);
-  const [weatherList, setWeatherList] = useState({});
+  const [weatherList, setWeatherList] = useState([]);
 
-  //updates the weather when lat long changes
+  useEffect(() => {
+    db.transaction((tx) => {
+      tx.executeSql(`select * from weathers`, [], (tx, results) => {
+        if (weatherList.length === 0) {
+          console.log('result response');
+          setWeatherList(results.rows._array);
+        }
+      });
+    });
+
+    return () => {
+      if (weatherList.length > 0 && weatherList[0].daily) {
+        const valuesToPush = [];
+        var len = weatherList.length;
+
+        for (let i = 0; i < len; i++) {
+          const values = {
+            lat: weatherList[i].lat,
+            lon: weatherList[i].lon,
+            icon: weatherList[i].icon,
+            timezone: weatherList[i].timezone,
+            temp: weatherList[i].temp,
+            feels_like: weatherList[i].feels_like,
+            description: weatherList[i].description,
+          };
+          0;
+          valuesToPush.push(...Object.values(values));
+        }
+        db.transaction((tx) => {
+          tx.executeSql(
+            'create table if not exists weathers (id integer primary key not null, lat real, lon real,icon text, timezone text, temp text, feels_like text,description text);'
+          );
+          tx.executeSql(`delete * from weathers`);
+          console.log('insert');
+          tx.executeSql(
+            'insert into weathers (lat,lon,icon,timezone,temp,feels_like,description) values (?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?)',
+            valuesToPush
+          );
+        });
+      }
+    };
+  }, [db]);
+
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -42,8 +90,11 @@ export default function WeatherList({ navigation }) {
         setWeatherList(
           response.map((apiResponse) => {
             return {
+              ...apiResponse.data.current,
+              ...apiResponse.data.current.weather[0],
               timezone: apiResponse.data.timezone,
-              current: apiResponse.data.current,
+              lat: apiResponse.data.lat,
+              lon: apiResponse.data.lon,
               daily: apiResponse.data.daily,
             };
           })
@@ -52,73 +103,41 @@ export default function WeatherList({ navigation }) {
       .catch((error) => {
         console.log('error: ', error);
       });
-
-    return () => controller.abort();
-  }, [lat, long]);
+  }, [lat]);
 
   return (
-    <View style={styles.mainView}>
+    <Container>
       <StatusBar style='auto' />
-      {/* <APIError
-        visible={modalVisible}
-        error={apiError}
-        onButtonPress={setModalVisible}
-      />
-      <NoConnectionServerError
-        visible={networkErrorStatus}
-        errorStatus={errorStatus}
-        onButtonPress={() => {
-          setNetworkErrorStatus(false);
-          setModalVisible(false);
-        }}
-      /> */}
-      <FlatList
-        style={styles.subContainer}
-        data={weatherList}
-        renderItem={(weather) => {
-          return (
-            <WeatherItem
-              key={weather.index}
-              weather={weather.item}
-              onPress={(weather) => {
-                navigation.navigate('WeatherDetails', { ...weather });
-              }}
-            />
-          );
-        }}
-      />
-    </View>
+      <ImageBackground source={bgImg} style={{ width: '100%', height: '100%' }}>
+        <FlatList
+          style={styles.list}
+          data={weatherList}
+          keyExtractor={(item, index) => String(index)}
+          renderItem={(weather) => {
+            return (
+              <WeatherItem
+                weather={weather.item}
+                onPress={(weather) => {
+                  navigation.navigate('WeatherDetails', { ...weather });
+                }}
+              />
+            );
+          }}
+        />
+      </ImageBackground>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  mainView: {
-    flex: 1,
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    backgroundColor: colors.background,
-    paddingTop: ExpoConstants.statusBarHeight,
-  },
-  subContainer: {
+  list: {
+    margin: 16,
     width: '100%',
     height: '100%',
-    backgroundColor: colors.background,
   },
-  scrollView: {
-    flexGrow: 1,
-    backgroundColor: colors.background,
-  },
-  boldText: { fontWeight: 'bold' },
-  cardTitleView: {
-    flexDirection: 'row',
-    marginHorizontal: '8%',
-    paddingTop: 40,
-  },
-  cardTitle: {
-    ...Styles.textBold,
-    flex: 1,
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  cardTitleIcon: { marginLeft: 24 },
 });
+
+const Container = styled.View`
+  flex: 1;
+  background-color: dodgerblue;
+`;
