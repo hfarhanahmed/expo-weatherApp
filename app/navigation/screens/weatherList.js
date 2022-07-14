@@ -9,8 +9,7 @@ import WeatherItem from '../components/WeatherItem';
 import * as SQLite from 'expo-sqlite';
 
 export default function WeatherList({ navigation }) {
-  const db = openDatabase();
-  function openDatabase() {
+  const openDatabase = () => {
     if (Platform.OS === 'web') {
       return {
         transaction: () => {
@@ -23,7 +22,10 @@ export default function WeatherList({ navigation }) {
 
     const db = SQLite.openDatabase('weather-db.db');
     return db;
-  }
+  };
+
+  const db = openDatabase();
+
   const [lat, setLat] = useState(43.6532);
   const [long, setLong] = useState(-79.3832);
   const [weatherList, setWeatherList] = useState([]);
@@ -61,7 +63,6 @@ export default function WeatherList({ navigation }) {
             'create table if not exists weathers (id integer primary key not null, lat real, lon real,icon text, timezone text, temp text, feels_like text,description text);'
           );
           tx.executeSql(`delete * from weathers`);
-          console.log('insert');
           tx.executeSql(
             'insert into weathers (lat,lon,icon,timezone,temp,feels_like,description) values (?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?),(?,?,?,?,?,?,?)',
             valuesToPush
@@ -71,20 +72,7 @@ export default function WeatherList({ navigation }) {
     };
   }, [db]);
 
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({});
-
-      setLat(location.coords.latitude);
-      setLong(location.coords.longitude);
-    })();
-
+  const getWeather = () => {
     getWeatherList(lat, long)
       .then((response) => {
         setWeatherList(
@@ -103,7 +91,29 @@ export default function WeatherList({ navigation }) {
       .catch((error) => {
         console.log('error: ', error);
       });
-  }, [lat]);
+  };
+
+  useEffect(() => {
+    getWeather();
+    const interval = setInterval(() => {
+      getWeather();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [long]);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({});
+      setLat(location.coords.latitude);
+      setLong(location.coords.longitude);
+    })();
+  }, []);
 
   return (
     <Container>

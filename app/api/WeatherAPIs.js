@@ -1,6 +1,5 @@
 import { getAPICall } from './ApiWrapper';
 import config from '../../config.json';
-import response from './response.json';
 
 export function getWeatherList(lat, long) {
   return new Promise(async (success, failure) => {
